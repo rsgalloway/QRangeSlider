@@ -35,21 +35,24 @@
 __author__ = "Ryan Galloway <ryan@rsgalloway.com>"
 __version__ = "0.1.1"
 
+
 # ---------------------------------------------------------------------------------------------
 # SUMMARY
 # ---------------------------------------------------------------------------------------------
-"""
-The QRangeSlider class implements a horizontal range slider widget.
+"""The QRangeSlider class implements a horizontal range slider widget.
+
 """
 
 # ---------------------------------------------------------------------------------------------
 # TODO
 # ---------------------------------------------------------------------------------------------
+
 """
   - smoother mouse move event handler
   - support splits and joins
   - verticle sliders
   - ticks
+  
 """
 
 # ---------------------------------------------------------------------------------------------
@@ -95,6 +98,7 @@ QRangeSlider > QSplitter::handle:vertical {
 QRangeSlider > QSplitter::handle:pressed {
     background: #ca5;
 }
+
 """
 
 def scale(val, src, dst):
@@ -105,6 +109,7 @@ def scale(val, src, dst):
 
 class Ui_Form(object):
     """default range slider form"""
+    
     def setupUi(self, Form):
         Form.setObjectName(_fromUtf8("QRangeSlider"))
         Form.resize(300, 30)
@@ -133,7 +138,11 @@ class Ui_Form(object):
         QtCore.QMetaObject.connectSlotsByName(Form)
 
     def retranslateUi(self, Form):
-        Form.setWindowTitle(QtGui.QApplication.translate("QRangeSlider", "QRangeSlider", None, QtGui.QApplication.UnicodeUTF8))
+        encoding = QtGui.QApplication.UnicodeUTF8
+        Form.setWindowTitle(QtGui.QApplication.translate("QRangeSlider", 
+                                                         "QRangeSlider",
+                                                         None, encoding))
+
 
 class Element(QtGui.QGroupBox):
     
@@ -165,8 +174,10 @@ class Element(QtGui.QGroupBox):
             self.drawText(event, qp)
         qp.end()
 
+
 class Head(Element):
     """area before the handle"""
+    
     def __init__(self, parent, main):
         super(Head, self).__init__(parent, main)
 
@@ -174,9 +185,11 @@ class Head(Element):
         qp.setPen(self.textColor())
         qp.setFont(QtGui.QFont('Arial', 10))
         qp.drawText(event.rect(), QtCore.Qt.AlignLeft, str(self.main.min()))
-        
+
+
 class Tail(Element):
     """area after the handle"""
+    
     def __init__(self, parent, main):
         super(Tail, self).__init__(parent, main)
         
@@ -185,8 +198,10 @@ class Tail(Element):
         qp.setFont(QtGui.QFont('Arial', 10))
         qp.drawText(event.rect(), QtCore.Qt.AlignRight, str(self.main.max()))
 
+
 class Handle(Element):
     """handle area"""
+    
     def __init__(self, parent, main):
         super(Handle, self).__init__(parent, main)
         
@@ -221,7 +236,8 @@ class Handle(Element):
         e = self.main.end() + dx
         if s >= self.main.min() and e <= self.main.max():
             self.main.setRange(s, e)
-            
+
+
 class QRangeSlider(QtGui.QWidget, Ui_Form):
     """
     The QRangeSlider class implements a horizontal range slider widget.
@@ -285,6 +301,10 @@ class QRangeSlider(QtGui.QWidget, Ui_Form):
         }
         
     """
+    endValueChanged = QtCore.pyqtSignal(int)
+    maxValueChanged = QtCore.pyqtSignal(int)
+    minValueChanged = QtCore.pyqtSignal(int)
+    startValueChanged = QtCore.pyqtSignal(int)
 
     # define splitter indices
     _SPLIT_START = 1
@@ -297,11 +317,11 @@ class QRangeSlider(QtGui.QWidget, Ui_Form):
     endValueChanged = QtCore.pyqtSignal(int)
 
     def __init__(self, parent=None):
-        """
-        Create a new QRangeSlider instance.
+        """Create a new QRangeSlider instance.
         
-        :param parent: QWidget parent
-        :return: New QRangeSlider instance.
+            :param parent: QWidget parent
+            :return: New QRangeSlider instance.
+        
         """
         super(QRangeSlider, self).__init__(parent)
         self.setupUi(self)
@@ -485,6 +505,11 @@ class QRangeSlider(QtGui.QWidget, Ui_Form):
         _unlockWidth(self._tail)
         _unlockWidth(self._head)
         _unlockWidth(self._handle)
+
+
+#-------------------------------------------------------------------------------
+# MAIN
+#-------------------------------------------------------------------------------
 
 if __name__ == '__main__':
     app = QtGui.QApplication(sys.argv)
