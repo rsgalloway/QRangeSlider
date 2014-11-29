@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # ---------------------------------------------------------------------------------------------
-# Copyright (c) 2011-2012, Ryan Galloway (ryan@rsgalloway.com)
+# Copyright (c) 2011-2014, Ryan Galloway (ryan@rsgalloway.com)
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -33,7 +33,7 @@
 # ---------------------------------------------------------------------------------------------
 
 __author__ = "Ryan Galloway <ryan@rsgalloway.com>"
-__version__ = "0.1"
+__version__ = "0.1.1"
 
 # ---------------------------------------------------------------------------------------------
 # SUMMARY
@@ -96,6 +96,12 @@ QRangeSlider > QSplitter::handle:pressed {
     background: #ca5;
 }
 """
+
+def scale(val, src, dst):
+    """
+    Scale the given value from the scale of src to the scale of dst.
+    """
+    return int(((val - src[0]) / float(src[1]-src[0])) * (dst[1]-dst[0]) + dst[0])
 
 class Ui_Form(object):
     """default range slider form"""
@@ -283,7 +289,13 @@ class QRangeSlider(QtGui.QWidget, Ui_Form):
     # define splitter indices
     _SPLIT_START = 1
     _SPLIT_END = 2
-    
+
+    # signals
+    minValueChanged = QtCore.pyqtSignal(int)
+    maxValueChanged = QtCore.pyqtSignal(int)
+    startValueChanged = QtCore.pyqtSignal(int)
+    endValueChanged = QtCore.pyqtSignal(int)
+
     def __init__(self, parent=None):
         """
         Create a new QRangeSlider instance.
@@ -296,7 +308,7 @@ class QRangeSlider(QtGui.QWidget, Ui_Form):
         self.setMouseTracking(False)
 
         #self._splitter.setChildrenCollapsible(False)
-        self.connect(self._splitter, QtCore.SIGNAL("splitterMoved (int,int)"), self._handleMoveSplitter)
+        self._splitter.splitterMoved.connect(self._handleMoveSplitter)
 
         # head layout
         self._head_layout = QtGui.QHBoxLayout()
@@ -342,13 +354,13 @@ class QRangeSlider(QtGui.QWidget, Ui_Form):
         """sets minimum value"""
         assert type(value) is int
         setattr(self, '__min', value)
-        self.emit(QtCore.SIGNAL("minValueChanged (int)"), value)
+        self.minValueChanged.emit(value)
 
     def setMax(self, value):
         """sets maximum value"""
         assert type(value) is int
         setattr(self, '__max', value)
-        self.emit(QtCore.SIGNAL("maxValueChanged (int)"), value)
+        self.maxValueChanged.emit(value)
     
     def start(self):
         """:return: range slider start value"""
@@ -361,25 +373,29 @@ class QRangeSlider(QtGui.QWidget, Ui_Form):
     def _setStart(self, value):
         """stores the start value only"""
         setattr(self, '__start', value)
-        self.emit(QtCore.SIGNAL("startValueChanged (int)"), value)
+        self.startValueChanged.emit(value)
     
     def setStart(self, value):
         """sets the range slider start value"""
         assert type(value) is int
         v = self._valueToPos(value)
+        self._splitter.splitterMoved.disconnect()
         self._splitter.moveSplitter(v, self._SPLIT_START)
+        self._splitter.splitterMoved.connect(self._handleMoveSplitter)
         self._setStart(value)
 
     def _setEnd(self, value):
         """stores the end value only"""
         setattr(self, '__end', value)
-        self.emit(QtCore.SIGNAL("endValueChanged (int)"), value)
+        self.endValueChanged.emit(value)
     
     def setEnd(self, value):
         """set the range slider end value"""
         assert type(value) is int
         v = self._valueToPos(value)
+        self._splitter.splitterMoved.disconnect()
         self._splitter.moveSplitter(v, self._SPLIT_END)
+        self._splitter.splitterMoved.connect(self._handleMoveSplitter)
         self._setEnd(value)
 
     def drawValues(self):
@@ -427,16 +443,16 @@ class QRangeSlider(QtGui.QWidget, Ui_Form):
 
     def _valueToPos(self, value):
         """converts slider value to local pixel x coord"""
-        return int(self.width() * (float(value) / self.max()))
+        return scale(value, (self.min(), self.max()), (0, self.width()))
 
     def _posToValue(self, xpos):
         """converts local pixel x coord to slider value"""
-        return int(((xpos + self._splitter.handleWidth()) / float(self.width())) * self.max())
+        return scale(xpos, (0, self.width()), (self.min(), self.max()))
 
     def _handleMoveSplitter(self, xpos, index):
         """private method for handling moving splitter handles"""
         hw = self._splitter.handleWidth()
-
+        
         def _lockWidth(widget):
             width = widget.size().width()
             widget.setMinimumWidth(width)
